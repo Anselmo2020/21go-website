@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { label: 'Assistência 24h', href: '#assistencia-24h' }
 ];
 const WHATSAPP_LINK = 'https://wa.me/5521983462049?text=Ol%C3%A1%2C%20Consultor%2021GO%20Anselmo.%20Quero%20fazer%20uma%20simula%C3%A7%C3%A3o.';
+const WHATSAPP_NUMBER = '5521983462049';
 const INSTAGRAM_LINK = 'https://www.instagram.com/21goprotecao.anselmo?utm_source=qr&igsh=ZWRyOGl2bHY1eXB2';
 const EMAIL_LINK = 'mailto:21goprotecao.anselmo@gmail.com';
 const VEICULOS_ICONS = {
@@ -21,6 +22,7 @@ const VEICULOS_ICONS = {
 const VEICULOS = ['Carros', 'Motos', 'Utilitários', 'Frotas'];
 
 export default function App() {
+  const [formMessage, setFormMessage] = useState({ type: '', text: '' });
   const [formData, setFormData] = useState({
     nome: '',
     whatsapp: '',
@@ -32,22 +34,69 @@ export default function App() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    setFormMessage({ type: '', text: '' });
     setFormData({ ...formData, [name]: value });
   };
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    console.log('Dados da cotação enviados:', formData);
-    alert(`Obrigado, ${formData.nome}! Em breve entraremos em contato.`);
+
+    const dados = {
+      nome: formData.nome.trim().replace(/\s+/g, ' '),
+      whatsapp: formData.whatsapp.replace(/\D/g, ''),
+      email: formData.email.trim().toLowerCase(),
+      tipoVeiculo: formData.tipoVeiculo,
+      placaVeiculo: formData.placaVeiculo.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''),
+      AnoVeiculo: formData.AnoVeiculo.replace(/\D/g, '')
+    };
+
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dados.email);
+    const anoAtual = new Date().getFullYear() + 1;
+    const anoVeiculo = Number(dados.AnoVeiculo);
+
+    if (dados.nome.length < 3) {
+      setFormMessage({ type: 'error', text: 'Digite seu nome completo.' });
+      return;
+    }
+
+    if (dados.whatsapp.length < 10 || dados.whatsapp.length > 11) {
+      setFormMessage({ type: 'error', text: 'Digite um WhatsApp válido com DDD.' });
+      return;
+    }
+
+    if (!emailValido) {
+      setFormMessage({ type: 'error', text: 'Digite um e-mail válido.' });
+      return;
+    }
+
+    if (dados.AnoVeiculo && (anoVeiculo < 1950 || anoVeiculo > anoAtual)) {
+      setFormMessage({ type: 'error', text: 'Digite um ano de veículo válido.' });
+      return;
+    }
+
+    const mensagem = [
+      'Olá, Consultor 21GO Anselmo. Quero fazer uma simulação.',
+      '',
+      `Nome: ${dados.nome}`,
+      `WhatsApp: ${dados.whatsapp}`,
+      `E-mail: ${dados.email}`,
+      `Tipo do veículo: ${dados.tipoVeiculo}`,
+      `Placa: ${dados.placaVeiculo || 'Não informada'}`,
+      `Ano: ${dados.AnoVeiculo || 'Não informado'}`
+    ].join('\n');
+
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setFormMessage({ type: 'success', text: 'Tudo certo. Abrimos o WhatsApp com sua simulação preenchida.' });
   };
 
   // Configuração dos campos para renderização dinâmica
   const formInputs = [
-    { name: 'nome', label: 'Nome Completo', type: 'text', placeholder: 'Ex: Anselmo Silva', required: true },
-    { name: 'whatsapp', label: 'WhatsApp / Telefone', type: 'tel', placeholder: '(00) 00000-0000', required: true },
-    { name: 'email', label: 'E-mail', type: 'email', placeholder: 'exemplo@email.com', required: true },
-    { name: 'placaVeiculo', label: 'Placa do Veículo', type: 'text', placeholder: 'Digite a placa...', required: false },
-    { name: 'AnoVeiculo', label: 'Ano do Veículo', type: 'text', placeholder: 'Digite o ano...', required: false }
+    { name: 'nome', label: 'Nome Completo', type: 'text', placeholder: 'Ex: Anselmo Silva', required: true, maxLength: 80, autoComplete: 'name' },
+    { name: 'whatsapp', label: 'WhatsApp / Telefone', type: 'tel', placeholder: '(00) 00000-0000', required: true, maxLength: 16, autoComplete: 'tel', inputMode: 'tel' },
+    { name: 'email', label: 'E-mail', type: 'email', placeholder: 'exemplo@email.com', required: true, maxLength: 120, autoComplete: 'email' },
+    { name: 'placaVeiculo', label: 'Placa do Veículo', type: 'text', placeholder: 'Digite a placa...', required: false, maxLength: 8, autoComplete: 'off' },
+    { name: 'AnoVeiculo', label: 'Ano do Veículo', type: 'text', placeholder: 'Digite o ano...', required: false, maxLength: 4, inputMode: 'numeric', autoComplete: 'off' }
   ];
 
   return (
@@ -143,6 +192,9 @@ export default function App() {
                     type={input.type} 
                     name={input.name}
                     required={input.required}
+                    maxLength={input.maxLength}
+                    autoComplete={input.autoComplete}
+                    inputMode={input.inputMode}
                     value={formData[input.name]}
                     onChange={handleInputChange}
                     placeholder={input.placeholder}
@@ -172,6 +224,17 @@ export default function App() {
             <button type="submit" className="w-full bg-[#f26522] hover:bg-[#d9531e] text-white py-4 rounded-xl font-bold text-lg shadow-lg transition-all duration-300 mt-2">
               Enviar Simulação
             </button>
+
+            {formMessage.text && (
+              <p
+                role="status"
+                className={`text-sm font-semibold text-center ${
+                  formMessage.type === 'error' ? 'text-red-600' : 'text-emerald-700'
+                }`}
+              >
+                {formMessage.text}
+              </p>
+            )}
           </form>
         </div>
       </section>

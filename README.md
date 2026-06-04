@@ -227,20 +227,21 @@ O estado do formulário fica em `formData`.
 Atualmente, ao enviar:
 
 - o comportamento padrão do formulário é bloqueado com `e.preventDefault()`
-- os dados são exibidos no console
-- um alerta de agradecimento aparece para o usuário
+- os campos são normalizados e validados
+- os dados não são exibidos no console
+- o WhatsApp é aberto com a mensagem da simulação já preenchida
+- uma mensagem de erro ou sucesso aparece abaixo do botão
 
 Função responsável:
 
 ```jsx
 const handleFormSubmit = (e) => {
   e.preventDefault();
-  console.log('Dados da cotação enviados:', formData);
-  alert(`Obrigado, ${formData.nome}! Em breve entraremos em contato.`);
+  // valida os dados e abre o WhatsApp com a mensagem codificada
 };
 ```
 
-Para integrar com backend, WhatsApp ou serviço externo, substitua essa função.
+Para integrar com backend, e-mail ou CRM, substitua essa função mantendo as validações.
 
 ## Como Editar Coberturas
 
@@ -349,6 +350,26 @@ npm run preview
 - Conferir menu em desktop
 - Conferir textos comerciais e dados legais
 - Conferir favicon e título no navegador
+
+## Segurança Aplicada
+
+O projeto possui algumas proteções básicas no frontend:
+
+- O formulário valida nome, WhatsApp, e-mail e ano do veículo antes de abrir o WhatsApp.
+- Os dados do formulário não são mais enviados para `console.log`.
+- A mensagem enviada ao WhatsApp é montada com `encodeURIComponent`.
+- Links externos usam `target="_blank"` com `rel="noreferrer"`.
+- O `index.html` possui `Content-Security-Policy` básica para limitar scripts, imagens, fontes e objetos externos.
+- O `index.html` possui política de referência com `strict-origin-when-cross-origin`.
+- O favicon aponta para um arquivo local do projeto.
+
+Algumas proteções dependem da hospedagem e devem ser configuradas no painel ou servidor:
+
+- HTTPS obrigatório.
+- Redirecionamento de HTTP para HTTPS.
+- HSTS.
+- Cabeçalho `X-Content-Type-Options: nosniff`.
+- Cabeçalho `Permissions-Policy`.
 
 ## Melhorias Futuras Recomendadas
 
